@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import User
-from .utils import validate_email as email_is_valid
+from .utils import email_validator
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('email', 'first_name', 'last_name',)
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class StudentRegistrationSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
 
     class Meta:
@@ -36,7 +36,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         :return: string
         """
 
-        if not email_is_valid(value):
+        if not email_validator(value):
             raise serializers.ValidationError('Please use a different email address provider.')
 
         if User.objects.filter(email=value).exists():

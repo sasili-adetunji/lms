@@ -1,7 +1,4 @@
 import uuid
-from datetime import timedelta
-
-from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.utils import timezone
@@ -24,7 +21,8 @@ class MyUserManager(BaseUserManager):
         """
         now = timezone.now()
         email = self.normalize_email(email)
-        user = self.model(email=email,
+        user = self.model(
+                          email=email,
                           first_name=first_name,
                           last_name=last_name,
                           is_staff=is_staff,
@@ -71,23 +69,18 @@ class User(AbstractBaseUser):
     """
     Model that represents an user.
 
-    To be active, the user must register and confirm his email.
     """
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)  # pylint: disable=invalid-name
-
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    username = models.CharField(_('Username'), max_length=50)
     first_name = models.CharField(_('First Name'), max_length=50)
     last_name = models.CharField(_('Last Name'), max_length=50)
     email = models.EmailField(_('Email address'), unique=True)
-    confirmed_email = models.BooleanField(default=False)
     is_staff = models.BooleanField(_('staff status'), default=False)
     is_superuser = models.BooleanField(_('superuser status'), default=False)
     is_active = models.BooleanField(_('active'), default=True)
-
     date_joined = models.DateTimeField(_('date joined'), auto_now_add=True)
     date_updated = models.DateTimeField(_('date updated'), auto_now=True)
-
-    activation_key = models.UUIDField(unique=True, default=uuid.uuid4)  # email
 
     USERNAME_FIELD = 'email'
 
@@ -109,22 +102,9 @@ class User(AbstractBaseUser):
         """
         return "{0} {1}".format(self.first_name, self.last_name)
 
-    def activation_expired(self):
-        """
-        Check if user's activation has expired. 7 days
 
-        :return: boolean
-        """
-        return self.date_joined + timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS) < timezone.now()
+    def has_perm(self, perm, obj=None):
+        return self.is_superuser
 
-    def confirm_email(self):
-        """
-        Confirm email.
-
-        :return: boolean
-        """
-        if not self.activation_expired() and not self.confirmed_email:
-            self.confirmed_email = True
-            self.save()
-            return True
-        return False
+    def has_module_perms(self, app_label):
+        return self.is_superuser

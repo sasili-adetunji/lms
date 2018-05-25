@@ -3,7 +3,7 @@ from django.core.validators import validate_email as django_validate_email
 from django.db import transaction
 
 
-def validate_email(value):
+def email_validator(value):
     """Validate a single email."""
     if not value:
         return False
