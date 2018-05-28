@@ -10,9 +10,7 @@ class CompositeUserSerializer(serializers.Serializer):
     """
     first_name = serializers.CharField(max_length=255)
     last_name = serializers.CharField(max_length=255)
-    email = serializers.EmailField()
-    last_login = serializers.DateTimeField(allow_null=True)
-    date_joined = serializers.DateTimeField()
+    username = serializers.CharField(max_length=255)
 
 
 class TokenSerializer(serializers.Serializer):
@@ -27,19 +25,26 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for the  User model in django auth
     """
+
+    # first_name = serializers.CharField(max_length=255)
+    # last_name = serializers.CharField(max_length=255)
+    # username = serializers.CharField(max_length=255)
+
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'password')
+        fields = ('username', 'first_name', 'last_name', 'password')
+        extra_kwargs = {'password': {'write_only': True}}
 
 
-#
-# class UserProfileSerializer(serializers.ModelSerializer):
-#     """
-#     Serializer for the User Profile model
-#     """
-#     class Meta:
-#         model = UserProfile
-#         fields = '__all__'
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the User Profile model
+    """
+    class Meta:
+        model = User
+        fields = ('username', 'password')
+        extra_kwargs = {'password': {'write_only': True}}
 
 #
 # from rest_framework import serializers

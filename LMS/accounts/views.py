@@ -1,26 +1,21 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView, status
-from rest_framework.generics import (
-    UpdateAPIView,
-    CreateAPIView,
-    ListAPIView,
-)
 from rest_framework.permissions import (
     IsAuthenticated,
-    IsAdminUser,
     AllowAny
 )
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
 from .serializers import (
     CompositeUserSerializer,
     TokenSerializer,
+    UserSerializer,
+    UserProfileSerializer,
 )
 from .utils import (
     fetch_single_user,
     create_user_profile,
     update_user_profile,
 )
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from rest_framework_jwt.settings import api_settings
 
@@ -36,6 +31,7 @@ class RegisterUsers(APIView):
     * non authenticated users can access it
     """
     permission_classes = (AllowAny,)
+    serializer_class = UserSerializer
 
     def post(self, request):
         """
@@ -49,46 +45,43 @@ class RegisterUsers(APIView):
         :param request:
         :return:
         """
-        # compose the data
-        data = {
-            'username': request.data.get('username', None),
-            'email': request.data.get('email', None),
-            'password': request.data.get('password', None),
-            'first_name': request.data.get('first_name', ''),
-            'last_name': request.data.get('last_name', ''),
-        }
-        # go ahead and create a user profile
-        if create_user_profile(data=data):
-            # serialize the created user profile
-            serializer = CompositeUserSerializer(
-                data=fetch_single_user(username=data['username'])
-            )
-            serializer.is_valid()
-            print(serializer.data)
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            info = {
+                'username': request.data.get('username'),
+                'password': request.data.get('password'),
+                'first_name': request.data.get('first_name'),
+                'last_name': request.data.get('last_name'),
+            }
+            if create_user_profile(data=info):
+                # serialize the created user profile
+                serializer = CompositeUserSerializer(
+                    data=fetch_single_user(username=info['username'])
+                )
+                serializer.is_valid()
+                return Response(
+                    data=serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
+            else:
+                return Response({
+                    'message': "Error"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-            # respond with the created user profile
-            return Response(
-                data=serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
-class ResetUserPassword(UpdateAPIView):
+class ResetUserPassword(APIView):
     """
     View to update password of a logged in user
     """
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    queryset = User.objects.all()
-
-    def put(self, request, *args, **kwargs):
+    def put(self, request):
         """
         Update password of the user in the request object
         :param request:
-        :param args:
-        :param kwargs:
         :return:
         """
         data = {
@@ -96,24 +89,22 @@ class ResetUserPassword(UpdateAPIView):
             'password': request.data.get('password', '')
         }
         if update_user_profile(data=data):
-            return Response(status.HTTP_200_OK)
+            return Response({"message": "Your password has been successfully updated"}, status=status.HTTP_202_ACCEPTED)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginUser(CreateAPIView):
+class LoginUser(APIView):
     """
     View to login a user
     returns a token
     """
     permission_classes = (AllowAny,)
+    serializer_class = UserProfileSerializer
 
-    queryset = User.objects.all()
-
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         username = request.data.get('username', '')
         password = request.data.get('password', '')
         user = authenticate(request, username=username, password=password)
-        print(user)
         if user is not None:
             # login saves the user’s ID in the session,
             # using Django’s session framework.
@@ -129,7 +120,7 @@ class LoginUser(CreateAPIView):
         return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
-class LogoutUser(ListAPIView):
+class LogoutUser(APIView):
     """
     View to logout a user.
     * You have to have logged in to be able logout
@@ -138,9 +129,8 @@ class LogoutUser(ListAPIView):
     authentication_classes = (JSONWebTokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    queryset = User.objects.all()
-
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         logout(request)
-        return Response(status=status.HTTP_200_OK)
-
+        return Response({
+                        "message": "You have successfully logout of the application"},
+                        status=status.HTTP_200_OK)
