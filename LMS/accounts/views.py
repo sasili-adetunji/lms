@@ -1,14 +1,18 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView, status
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import (
     IsAuthenticated,
     AllowAny
 )
 from rest_framework import filters
 from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework.authtoken.views import ObtainAuthToken
 from .serializers import (
     UserProfileSerializer,
+    TokenSerializer,
 )
 from .utils import (
     fetch_single_user,
@@ -149,3 +153,46 @@ class UserProfileViewSet(ModelViewSet):
     permission_classes = (UpdateOwnProfile,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name', 'email',)
+
+
+class LoginViewSet(ViewSet):
+    """ checks email and password and return auth token """
+
+    serializer_class = AuthTokenSerializer
+
+    def create(self, request):
+        """ Use the ObtainAuthToken APIView to validate and create a token """
+
+        # return ObtainAuthToken().post(request)
+        username = request.data.get('username', '')
+        password = request.data.get('password', '')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            # login saves the user’s ID in the session,
+            # using Django’s session framework.
+            login(request, user)
+            serializer = TokenSerializer(data={
+                # using drf jwt utility functions to generate a token
+                'token': jwt_encode_handler(
+                    jwt_payload_handler(user)
+                )})
+            serializer.is_valid()
+
+            return Response(serializer.data)
+        return Response({"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class LogoutUser(APIView):
+    """
+    View to logout a user.
+    * You have to have logged in to be able logout
+    """
+
+    authentication_classes = (JSONWebTokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        logout(request)
+        return Response({
+                        "message": "You have successfully logout of the application"},
+                        status=status.HTTP_200_OK)

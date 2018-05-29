@@ -7,17 +7,22 @@ from .views import (
     # RegisterUsers,
     # ResetUserPassword,
     # LoginUser,
-    # LogoutUser,
-    UserProfileViewSet
+    LogoutUser,
+    UserProfileViewSet,
+    LoginViewSet,
 )
 
 
 router = DefaultRouter()
 
 router.register('profile', UserProfileViewSet)
+router.register('login', LoginViewSet, base_name='login')  # needs basename coz its not model viewsets
 
 urlpatterns = [
     url(r'', include(router.urls)),
+    url(_(r'^logout/$'),
+        LogoutUser.as_view(),
+        )
 ]
 
 # urlpatterns += router.urls
