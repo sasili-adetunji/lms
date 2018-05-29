@@ -117,32 +117,32 @@ USE_TZ = True
 ACCOUNT_ACTIVATION_DAYS = 7
 
 
-REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ],
-
-    # This sets the default test format to JSON for all requests instead
-    # of the default standard multipart form requests
-    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
-
-    # API versioning scheme, the version will be available via version
-    # parameter to the view
-    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
-
-    # Authentication settings
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-
-    # Pagination settings
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 50
-}
+# REST_FRAMEWORK = {
+#     # Use Django's standard `django.contrib.auth` permissions,
+#     # or allow read-only access for unauthenticated users.
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+#     ],
+#
+#     # This sets the default test format to JSON for all requests instead
+#     # of the default standard multipart form requests
+#     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+#
+#     # API versioning scheme, the version will be available via version
+#     # parameter to the view
+#     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
+#
+#     # Authentication settings
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+#         'rest_framework.authentication.SessionAuthentication',
+#         'rest_framework.authentication.BasicAuthentication',
+#     ],
+#
+#     # Pagination settings
+#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+#     'PAGE_SIZE': 50
+# }
 
 LOGGING = {
     'version': 1,
@@ -203,3 +203,5 @@ JWT_AUTH = {
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+AUTH_USER_MODEL = 'accounts.UserProfile'

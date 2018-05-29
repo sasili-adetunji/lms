@@ -1,94 +1,37 @@
 from rest_framework import serializers
 from .models import UserProfile
-from django.contrib.auth.models import User
-
-
-class CompositeUserSerializer(serializers.Serializer):
-    """
-    This serializer combines data from django auth user
-    and user profile model
-    """
-    first_name = serializers.CharField(max_length=255)
-    last_name = serializers.CharField(max_length=255)
-    username = serializers.CharField(max_length=255)
-
-
-class TokenSerializer(serializers.Serializer):
-    """
-    This serializer serializes the token data
-    """
-    token = serializers.CharField(max_length=255)
-
-
-
-class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the  User model in django auth
-    """
-
-    # first_name = serializers.CharField(max_length=255)
-    # last_name = serializers.CharField(max_length=255)
-    # username = serializers.CharField(max_length=255)
-
-    class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'password')
-        extra_kwargs = {'password': {'write_only': True}}
-
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer for the User Profile model
+    Serializer for the User Profile objects
     """
     class Meta:
-        model = User
-        fields = ('username', 'password')
-        extra_kwargs = {'password': {'write_only': True}}
+        model = UserProfile
+        fields = ('id', 'email', 'name', 'password')
 
-#
-# from rest_framework import serializers
-#
-# from .models import User
-# from .utils import email_validator
-#
-#
-# class UserSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ('email', 'first_name', 'last_name',)
-#
-#
-# class StudentRegistrationSerializer(serializers.ModelSerializer):
-#     email = serializers.EmailField()
-#
-#     class Meta:
-#         model = User
-#         fields = ('id', 'email', 'first_name', 'last_name', 'password')
-#
-#     def create(self, validated_data):
-#         """
-#         Create the object.
-#
-#         :param validated_data: string
-#         """
-#         user = User.objects.create(**validated_data)
-#         user.set_password(validated_data['password'])
-#         user.save()
-#         return user
-#
-#     def validate_email(self, value):
-#         """
-#         Validate if email is valid or there is a user with the email.
-#
-#         :param value: string
-#         :return: string
-#         """
-#
-#         if not email_validator(value):
-#             raise serializers.ValidationError('Please use a different email address provider.')
-#
-#         if User.objects.filter(email=value).exists():
-#             raise serializers.ValidationError('Email already in use, please use a different email address.')
-#
-#         return value
+        read_only_fields = (
+            'created_on',
+        )
+
+        extra_kwargs = {
+            'password': {'write_only': True, 'required': True},
+            'name': {'required': True},
+            'email': {'required': True},
+        }
+
+    def create(self, validated_data):
+        """
+        Create and return a new user
+        :param validated_data:
+        :return:
+        """
+        user = UserProfile(
+            email=validated_data['email'],
+            name=validated_data['name']
+        )
+
+        user.set_password(validated_data['password'])
+        user.save()
+
+        return user
